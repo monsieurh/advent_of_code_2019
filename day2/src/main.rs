@@ -6,6 +6,7 @@ type OpCode = usize;
 
 fn execute(opcodes: &mut Vec<OpCode>) -> Vec<OpCode> {
     let mut instruction_ptr = 0;
+    println!("{}\t{}\t{}", opcodes[0], opcodes[1], opcodes[2]);
     while instruction_ptr < opcodes.len() {
         match opcodes[instruction_ptr] {
             1 => {
@@ -23,7 +24,6 @@ fn execute(opcodes: &mut Vec<OpCode>) -> Vec<OpCode> {
                 instruction_ptr += 4;
             }
             99 => {
-                instruction_ptr += 1;
                 break;
             }
             _ => panic!("Invalid opcode, first value is {}", opcodes[0]),
@@ -33,7 +33,7 @@ fn execute(opcodes: &mut Vec<OpCode>) -> Vec<OpCode> {
 }
 
 fn run_opcode_program(memory: &mut Vec<OpCode>, noun: OpCode, verb: OpCode) -> usize {
-    println!("Starting program execution [noun:{}, verb:{}]", noun, verb);
+    println!("Run[noun:{}, verb:{}]", noun, verb);
     memory[1] = noun;
     memory[2] = verb;
 
@@ -44,6 +44,11 @@ fn run_opcode_program(memory: &mut Vec<OpCode>, noun: OpCode, verb: OpCode) -> u
 fn main() -> Result<()> {
     println!("Booting flight computer...");
     let file_path = args().nth(1).expect("Missing argument");
+    let desired_output: OpCode = args()
+        .nth(2)
+        .expect("Missing argument")
+        .parse()
+        .expect("Invalid number");
 
     println!("Reading memory file '{}'", file_path);
     let mut file = File::open(file_path)?;
@@ -55,11 +60,19 @@ fn main() -> Result<()> {
         .split(",")
         .map(|n| n.parse::<OpCode>().unwrap())
         .collect();
-    println!("Memory file loaded : {} opcodes", memory.len());
 
-    let result = run_opcode_program(&mut memory.clone(), 12, 2);
+    for noun in 0..100 {
+        for verb in 0..100 {
+            let result = run_opcode_program(&mut memory.clone(), noun, verb);
+            if result == desired_output {
+                println!("Desired output found for verb:{} and noun:{}", verb, noun);
+                println!("Puzzle solution is : {}", 100 * noun + verb);
+                return Ok(());
+            }
+        }
+    }
+    println!("Desired output not found");
 
-    println!("Program output (memory @0x0000):{}", result);
     Ok(())
 }
 
